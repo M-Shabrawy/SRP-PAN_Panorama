@@ -102,7 +102,8 @@ Function Add-Host{
         $AddressJSON = 
         '{
            "entry" : {
-               "ip-netmask" : $($Global:Host)
+               "ip-netmask" : "$($Global:Host)",
+               "@name" : "$($Global:Host)"
                }
            }
        }'
@@ -110,7 +111,8 @@ Function Add-Host{
         $AddressJSON = 
         '{
            "entry" : {
-               "fqdn" : $($Global:Host)
+               "fqdn" : "$($Global:Host)",
+               "@name" : "$($Global:Host)"
                }
            }
        }'
