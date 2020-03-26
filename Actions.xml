@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<remv1:Remediation-Plugin xmlns:remv1="RemediationVersion1.xsd" Name="PAN Panorama REST SRP" IsLogRhythmPlugin="true" Guid="50ca1ee5-cc12-4085-967b-8ac4d7cfc984" Version="1">
+
+  <remv1:Action Name="Add IP to Group" Command="powershell.exe">
+    <remv1:ConstantParameter Name="Script" Switch="-file PAN_Pano-REST.ps1 -Action AddIP" Order="1" />
+    <remv1:StringParameter Name="IP Address" Switch="-Host " Order="2"/>
+      <remv1:StringParameter Name="Group Name" Switch="-Group " Order="3">
+        <remv1:DefaultInput>
+          <remv1:StaticInput Value="LogRhythm-Block" />
+        </remv1:DefaultInput>
+      </remv1:StringParameter>
+    <remv1:StringParameter Name="Location" Switch="-Location " Order="4">
+      <remv1:DefaultInput>
+        <remv1:StaticInput Value="Shared" />
+      </remv1:DefaultInput>
+    </remv1:StringParameter>
+    <remv1:StringParameter Name="Panorama IP" Switch="-PANHost " Order="5"/>
+    <remv1:EncryptedParameter>
+      <remv1:StringParameter Name="API Key" Switch="-APIKey " Order="6"/>
+    </remv1:EncryptedParameter>
+  </remv1:Action>
+
+  <remv1:Action Name="Add Domain to Group" Command="powershell.exe">
+    <remv1:ConstantParameter Name="Script" Switch="-file PAN_Pano-REST.ps1 -Action AddDomain" Order="1" />
+    <remv1:StringParameter Name="Domain" Switch="-Host " Order="2"/>
+    <remv1:StringParameter Name="PAN Group Name" Switch="-Group " Order="3">
+      <remv1:DefaultInput>
+        <remv1:StaticInput Value="LogRhythm-Block" />
+      </remv1:DefaultInput>
+    </remv1:StringParameter>
+    <remv1:StringParameter Name="Location" Switch="-Location " Order="4">
+      <remv1:DefaultInput>
+        <remv1:StaticInput Value="Shared" />
+      </remv1:DefaultInput>
+    </remv1:StringParameter>
+    <remv1:StringParameter Name="Panorama IP" Switch="-PANHost " Order="5"/>
+    <remv1:EncryptedParameter>
+      <remv1:StringParameter Name="API Key" Switch="-APIKey " Order="6"/>
+    </remv1:EncryptedParameter>
+  </remv1:Action>
+
+  <remv1:Action Name="Run Setup" Command="powershell.exe">
+    <remv1:ConstantParameter Name="Script" Switch="-file PAN-Setup.ps1" Order="1" />
+    <remv1:StringParameter Name="PAN IP/Hostname" Switch="-PANHost " Order="2">
+    </remv1:StringParameter>
+    <remv1:StringParameter Name="PAN Username" Switch="-PANUser " Order="3">
+    </remv1:StringParameter>
+    <remv1:EncryptedParameter>
+      <remv1:StringParameter Name="PAN Password" Switch="-PANPass " Order="4" />
+    </remv1:EncryptedParameter>
+  </remv1:Action>
+  
+ </remv1:Remediation-Plugin>
