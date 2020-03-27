@@ -1,15 +1,15 @@
 ## PaloAlto Networks Panorama REST API Integration
-[CmdletBinding()]
+[CmdLetBinding()]
 param(
     [Parameter(Mandatory=$true)]
     [ValidateSet('AddIP','AddDomain')]
     [string]$Action,
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$Host,
+    [string]$Address,
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$Group,
+    [string]$AddressGroup,
     [Parameter(Mandatory=$false)]
     [string]$Location = "shared",
     [Parameter(Mandatory=$false)]
@@ -19,7 +19,7 @@ param(
     [Parameter(Mandatory=$false)]
     [string]$ConfigFilePath = 'C:\Program Files\LogRhythm\Smart Response Plugins\PAN Panorama REST SRP\config.xml',
     [Parameter(Mandatory=$false)]
-    [string]$PANVersion = 'v9.1'
+    [string]$PANVersion = 'v9.0'
 )
 
 $Global:ApiKEY = "LUFRPT01T29EdXJIRXJhMzMyWnFmUWhKMTFkb3Q0b0U9bWVFU1gzbVYva09CV2dFUngveEF0QVk0cXB2SmhEN2tUVkhQdWVGbGI3RlhMRXVDeHYrcHpnTTAzZnZrMEdTdw=="
@@ -72,15 +72,15 @@ Function Get-Config{
 
 Function Check-Group{
     if($Global:Location -eq 'shared'){
-        $GroupURI = "$Global:PANAPIBaseURI/Objects/AddressGroups?name=$Global:Group&localtion=$Global:Location&key=$Global:APIKey"
+        $GroupURI = "$Global:PANAPIBaseURI/Objects/AddressGroups?name=$Global:AddressGroup&localtion=$Global:Location&key=$Global:APIKey"
     }else{
-         $GroupURI = "$Global:PANAPIBaseURI/Objects/AddressGroups?name=$Global:Group&localtion=device-group&device-group=$Global:Location&key=$Global:APIKey"
+         $GroupURI = "$Global:PANAPIBaseURI/Objects/AddressGroups?name=$Global:AddressGroup&localtion=device-group&device-group=$Global:Location&key=$Global:APIKey"
     }
     
     try{
         $result = Invoke-RestMethod -Method Get -Uri $GroupURI -Headers -ContentType 'application/json'
-        if (($result | CovertFROM-JSON).result.entry.static.memeber -eq $Global:Group){
-            Write-Host "Group found $Global:Group"
+        if (($result | CovertFROM-JSON).result.entry.static.memeber -eq $Global:AddressGroup){
+            Write-Host "Group found $Global:AddressGroup"
         }
     }
     catch{
@@ -94,16 +94,16 @@ Function Check-Group{
 
 Function Add-Host{
     if($Global:Location -eq 'shared'){
-        $AddressURI = "$Global:PANAPIBaseURI/Objects/Addresses?name=$Global:Group&localtion=$Global:Location&key=$Global:APIKey&name=$Global:Host"
+        $AddressURI = "$Global:PANAPIBaseURI/Objects/Addresses?name=$Global:AddressGroup&localtion=$Global:Location&key=$Global:APIKey&name=$Global:Address"
     }else{
-         $AddressURI = "$Global:PANAPIBaseURI/Objects/Addresses?name=$Global:Group&localtion=device-group&device-group=$Global:Location&key=$Global:APIKey&name=$Global:Host"
+         $AddressURI = "$Global:PANAPIBaseURI/Objects/Addresses?name=$Global:AddressGroup&localtion=device-group&device-group=$Global:Location&key=$Global:APIKey&name=$Global:Address"
     }
     if($Action -eq 'AddIP'){
         $AddressJSON = 
         '{
            "entry" : {
-               "ip-netmask" : "$($Global:Host)",
-               "@name" : "$($Global:Host)"
+               "ip-netmask" : "'+$($Global:Address)+'",
+               "@name" : "' + $Global:Address + '"
                }
            }
        }'
@@ -111,8 +111,8 @@ Function Add-Host{
         $AddressJSON = 
         '{
            "entry" : {
-               "fqdn" : "$($Global:Host)",
-               "@name" : "$($Global:Host)"
+               "fqdn" : "' + $Global:Address + '",
+               "@name" : "' + $Global:Address + '"
                }
            }
        }'

@@ -3,8 +3,8 @@
 
   <remv1:Action Name="Add IP to Group" Command="powershell.exe">
     <remv1:ConstantParameter Name="Script" Switch="-file PAN_Pano-REST.ps1 -Action AddIP" Order="1" />
-    <remv1:StringParameter Name="IP Address" Switch="-Host " Order="2"/>
-      <remv1:StringParameter Name="Group Name" Switch="-Group " Order="3">
+    <remv1:StringParameter Name="IP Address" Switch="-Address " Order="2"/>
+      <remv1:StringParameter Name="Group Name" Switch="-AddressGroup " Order="3">
         <remv1:DefaultInput>
           <remv1:StaticInput Value="LogRhythm-Block" />
         </remv1:DefaultInput>
@@ -22,8 +22,8 @@
 
   <remv1:Action Name="Add Domain to Group" Command="powershell.exe">
     <remv1:ConstantParameter Name="Script" Switch="-file PAN_Pano-REST.ps1 -Action AddDomain" Order="1" />
-    <remv1:StringParameter Name="Domain" Switch="-Host " Order="2"/>
-    <remv1:StringParameter Name="PAN Group Name" Switch="-Group " Order="3">
+    <remv1:StringParameter Name="Domain" Switch="-Address " Order="2"/>
+    <remv1:StringParameter Name="PAN Group Name" Switch="-AddressGroup " Order="3">
       <remv1:DefaultInput>
         <remv1:StaticInput Value="LogRhythm-Block" />
       </remv1:DefaultInput>
@@ -47,6 +47,9 @@
     </remv1:StringParameter>
     <remv1:EncryptedParameter>
       <remv1:StringParameter Name="PAN Password" Switch="-PANPass " Order="4" />
+    </remv1:EncryptedParameter>
+    <remv1:EncryptedParameter>
+      <remv1:StringParameter Name="PAN API Key" Switch="-APIKey " Order="4" />
     </remv1:EncryptedParameter>
   </remv1:Action>
   

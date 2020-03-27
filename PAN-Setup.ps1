@@ -4,17 +4,19 @@ param(
     [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
     [string]$PANHost,
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [string]$PANUser,
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [string]$PANPass,
+    [Parameter(Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$APIKey,
     [Parameter(Mandatory=$false)]
     [string]$ConfigFilePath = 'C:\Program Files\LogRhythm\Smart Response Plugins\PAN Panorama REST SRP'
 )
 
-$Global:APIKey = ""
 $Global:ConfigFile = $Global:ConfigFilePath + "config.xml"
 trap [Exception] 
 {
@@ -57,7 +59,8 @@ Function Check-ConfigPath
 
 Function Get-Key
 {
-    $PANAPIKeyURL = "https://$Global:PANHost/api/?type=keygen&user=$Global:PANUser&password=$Global:PANPass"
+    if($Global:APIKey -eq ""){
+        $PANAPIKeyURL = "https://$Global:PANHost/api/?type=keygen&user=$Global:PANUser&password=$Global:PANPass"
    try{
         [xml]$xmlresult = = Invoke-WebRequest -Method Get -Uri $PANAPIKeyURL
     }
@@ -76,6 +79,7 @@ Function Get-Key
 		}
     }
     $Global:APIKey = $xmlresult.response.result.key
+    }
 }
 
 
