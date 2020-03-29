@@ -19,19 +19,18 @@ param(
     [Parameter(Mandatory=$false)]
     [string]$ConfigFilePath = 'C:\Program Files\LogRhythm\Smart Response Plugins\PAN Panorama REST SRP\config.xml',
     [Parameter(Mandatory=$false)]
-    [string]$PANVersion = 'v9.0'
+    [string]$PANVersion = '9.0'
 )
 
-$Global:ApiKEY = "LUFRPT01T29EdXJIRXJhMzMyWnFmUWhKMTFkb3Q0b0U9bWVFU1gzbVYva09CV2dFUngveEF0QVk0cXB2SmhEN2tUVkhQdWVGbGI3RlhMRXVDeHYrcHpnTTAzZnZrMEdTdw=="
-$Global:PANHost = '127.0.0.1'
-$Global:PANAPIBaseURI = "https://$Global:PANHost/restapi-doc/restapi/$Global:PANVersion/"
+$ApiKEY = "LUFRPT1aZlh5V3lTWEFYTVo1K2V6VmxMcjhpcEh0emc9aHo1RncwdUtNVzFmRlRtRGdlN3JQSXZ0SEpTRTZha1FZbzd0YU1FQWNpdnJLWWhzeHR6cmI5SWtxRm5DOVBBMktpVU9rWDBLRE84VGloQ1VwYkxHalE9PQ=="
+$PANAPIBaseURI = "https://$PANHost/restapi/$PANVersion"
 $tag = 'LRSRP'
 
 trap [Exception] 
 {
-	write-error $("Exception: " + $_)
-	exit 1
-}
+#	write-error $("Exception: " + $_)
+#	exit 1
+#}
 Function Disable-SSLError{
 	add-type @"
     using System.Net;
@@ -52,11 +51,11 @@ Function Disable-SSLError{
 
 Function Get-Config{
    try {
-        if (Test-Path $Global:ConfigFile) {
-            Write-Host ("Configuration file found: " + $Global:ConfigFile)
-            $Credentials = Import-Clixml -Path $Global:ConfigFile
-            $Global:PANHost =  [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR((($Credentials.PANHost))))
-            $Global:APIKey =  [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR((($Credentials.APIKey))))
+        if (Test-Path $ConfigFile) {
+            Write-Host ("Configuration file found: " + $ConfigFile)
+            $Credentials = Import-Clixml -Path $ConfigFile
+            $PANHost =  [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR((($Credentials.PANHost))))
+            $APIKey =  [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR((($Credentials.APIKey))))
         }
        else{
            Write-Host ("Configuration file not found. Please use Setup action to creat: " + $ConfigFile)
@@ -64,73 +63,115 @@ Function Get-Config{
        }
     }
     catch {
-        Write-Error ("The credentials within the configuration file are corrupt. Please recreate the file: " + $Global:ConfigFile)
+        Write-Error ("The credentials within the configuration file are corrupt. Please recreate the file: " + $ConfigFile)
         exit 1
     }
-    $Global:PANAPIBaseURI = "https://$Global:PANHost/restapi-doc/restapi/$Global:PANVersion/"
+    $PANAPIBaseURI = "https://$PANHost/restapi/$PANVersion"
 }
 
 Function Check-Group{
-    if($Global:Location -eq 'shared'){
-        $GroupURI = "$Global:PANAPIBaseURI/Objects/AddressGroups?name=$Global:AddressGroup&localtion=$Global:Location&key=$Global:APIKey"
+    if($Location -eq 'shared'){
+        $GroupURI = "$PANAPIBaseURI/Objects/AddressGroups?name=$AddressGroup&location=$Location&output-format=json&key=$APIKey"
     }else{
-         $GroupURI = "$Global:PANAPIBaseURI/Objects/AddressGroups?name=$Global:AddressGroup&localtion=device-group&device-group=$Global:Location&key=$Global:APIKey"
-    }
-    
+         $GroupURI = "$PANAPIBaseURI/Objects/AddressGroups?name=$AddressGroup&location=device-group&device-group=$Location&output-format=json&key=$APIKey"
+    }       
+
     try{
-        $result = Invoke-RestMethod -Method Get -Uri $GroupURI -Headers -ContentType 'application/json'
-        if (($result | CovertFROM-JSON).result.entry.static.memeber -eq $Global:AddressGroup){
-            Write-Host "Group found $Global:AddressGroup"
+         $result = Invoke-RestMethod -Method Get -Uri $GroupURI -ContentType 'application/json'
+        write-Host $result.result.entry
+        if ($result.StatusCode -eq '200'){
+            Write-Host "Group found $AddressGroup"
+        }else{
+             Write-Host "Group result $($result.StatusCode)"
         }
     }
     catch{
         write-host $message
-		write-error "API Call Unsuccessful."
-		throw "ExecutionFailure"
+		write-host "Group API Call Unsuccessful"
         exit 1
     }
 
 }
 
 Function Add-Host{
-    if($Global:Location -eq 'shared'){
-        $AddressURI = "$Global:PANAPIBaseURI/Objects/Addresses?name=$Global:AddressGroup&localtion=$Global:Location&key=$Global:APIKey&name=$Global:Address"
+    if($Location -eq 'shared'){
+        $AddressURI = "$PANAPIBaseURI/Objects/Addresses?location=$Location&output-format=json&key=$APIKey&name=SRP-$Address"
     }else{
-         $AddressURI = "$Global:PANAPIBaseURI/Objects/Addresses?name=$Global:AddressGroup&localtion=device-group&device-group=$Global:Location&key=$Global:APIKey&name=$Global:Address"
+         $AddressURI = "$PANAPIBaseURI/Objects/Addresses?location=device-group&device-group=$Location&output-format=json&key=$APIKey&name=SRP-$Address"
     }
     if($Action -eq 'AddIP'){
-        $AddressJSON = 
-        '{
-           "entry" : {
-               "ip-netmask" : "'+$($Global:Address)+'",
-               "@name" : "' + $Global:Address + '"
-               }
-           }
+        $AddressJSON = '{
+           "entry" : [
+                    {
+                       "ip-netmask" : "'+ $Address +'",
+                       "@name" : "SRP-' + $Address + '",
+                       "@location" : "' + $Location + '",
+                       "tag": {
+                            "member": [
+                                "LogRhythm"
+                             ]
+                         }
+                   }
+            ]
        }'
     }elseif ($Action -eq 'AddDomain'){
-        $AddressJSON = 
-        '{
-           "entry" : {
-               "fqdn" : "' + $Global:Address + '",
-               "@name" : "' + $Global:Address + '"
-               }
-           }
+        $AddressJSON = '{
+           "entry" : [
+                    {
+                       "fqdn" : "'+ $Address +'",
+                       "@name" : "SRP-' + $Address + '",
+                       "@location" : "' + $Location + '",
+                       "tag": {
+                            "member": [
+                                "LogRhythm"
+                             ]
+                         }
+                   }
+            ]
        }'
     }
-    
+    $result = Invoke-RestMethod -Method Post -Uri $AddressURI -ContentType 'application/json' -Body $AddressJSON
+    Write-Host $result
     try{
-        $result = Invoke-RestMethod -Method Post -Uri $AddressURI -Headers -ContentType 'application/json' -Body $AddressJSON
-        Write-Host $result
+       # $result = Invoke-RestMethod -Method Post -Uri $AddressURI -ContentType 'application/json' -Body $AddressJSON
+       # Write-Host $result
     }
     catch{
         write-host $message
-		write-error "API Call Unsuccessful."
+		write-host "Address API Call Unsuccessful."
 		throw "ExecutionFailure"
         exit 1
     }
 }
 
+Function Add-ToAddressGroup{
+    if($Location -eq 'shared'){
+        $GroupURI = "$PANAPIBaseURI/Objects/AddressGroups?name=$AddressGroup&location=$Location&output-format=json&key=$APIKey"
+    }else{
+         $GroupURI = "$PANAPIBaseURI/Objects/AddressGroups?name=$AddressGroup&location=device-group&device-group=$Location&output-format=json&key=$APIKey"
+    }
+    $result = Invoke-WebRequest -Uri $GroupURI -Method Get -ContentType 'application/json'
+    
+    $entry = ($result.Content | ConvertFrom-Json).result.entry
+    $entry[0].static.member += "SRP-$Address"
+    $Gob = [pscustomobject]@{
+        "entry" = $entry
+    }
+    $GroupJSON = ($Gob | ConvertTo-Json -Depth 6)
+    $GroupJSON
+    $result = ""
+    $result = Invoke-RestMethod -Uri $GroupURI -Method Put -Body $GroupJSON -ContentType 'application/json'
+    $result
+}
+
+
+Function Commit-Config{
+    $CommitURI = "https://$PANHost/api/?type=commit&cmd=<commit></commit>&key=$APIKey"
+    $DeviceCommitURI = 'https://'+$PANHost+'/api/?type=commit&action=all&cmd=<commit-all><shared-policy><device-group><entry%20name="'+$LOcation+'"/></device-group></shared-policy></commit-all>&key='+$APIKey
+}
+
 Disable-SSLError
-Get-Config
+#Get-Config
 Check-Group
 Add-Host
+Add-ToAddressGroup

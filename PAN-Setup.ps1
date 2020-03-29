@@ -17,7 +17,7 @@ param(
     [string]$ConfigFilePath = 'C:\Program Files\LogRhythm\Smart Response Plugins\PAN Panorama REST SRP'
 )
 
-$Global:ConfigFile = $Global:ConfigFilePath + "config.xml"
+$ConfigFile = $ConfigFilePath + "config.xml"
 trap [Exception] 
 {
 	write-error $("Exception: " + $_)
@@ -45,13 +45,13 @@ Function Disable-SSLError{
 #-----------Check Configuration file path------------
 Function Check-ConfigPath
 {
-    if(!(Test-Path $global:ConfigFilePath)) {
+    if(!(Test-Path $ConfigFilePath)) {
         Write-Host ('Folder not found: "$CredentialsFile" Creating')
         try {
-            New-Item -Path $global:ConfigFilePath -ItemType Directory -Force
+            New-Item -Path $ConfigFilePath -ItemType Directory -Force
         }
         catch {
-            Write-Error ('Failed to create folder $global:ConfigFilePath')
+            Write-Error ('Failed to create folder $ConfigFilePath')
             exit 1
         }
     }
@@ -59,8 +59,8 @@ Function Check-ConfigPath
 
 Function Get-Key
 {
-    if($Global:APIKey -eq ""){
-        $PANAPIKeyURL = "https://$Global:PANHost/api/?type=keygen&user=$Global:PANUser&password=$Global:PANPass"
+    if($APIKey -eq ""){
+        $PANAPIKeyURL = "https://$PANHost/api/?type=keygen&user=$PANUser&password=$PANPass"
    try{
         [xml]$xmlresult = = Invoke-WebRequest -Method Get -Uri $PANAPIKeyURL
     }
@@ -78,7 +78,7 @@ Function Get-Key
             exit
 		}
     }
-    $Global:APIKey = $xmlresult.response.result.key
+    $APIKey = $xmlresult.response.result.key
     }
 }
 
@@ -86,8 +86,8 @@ Function Get-Key
 Function Create-Hashtable
 {
 	$HashTable = [PSCustomObject]@{  
-        "SEPHost" = $Global:PANHost | ConvertTo-SecureString
-        "APIKey" = $Global:APIKey | ConvertTo-SecureString
+        "SEPHost" = $PANHost | ConvertTo-SecureString
+        "APIKey" = $APIKey | ConvertTo-SecureString
 	}
 }
 
@@ -95,16 +95,16 @@ Function Create-Hashtable
 Function Create-ConfigFile
 {
     try {
-        if (!(Test-Path $Global:ConfigFile)) {
-            Write-Host ("Configuration file not found: " + $Global:ConfigFile + "Creating a new one")
-            New-Item -Path $Global:ConfigFile -ItemType File -Force
+        if (!(Test-Path $ConfigFile)) {
+            Write-Host ("Configuration file not found: " + $ConfigFile + "Creating a new one")
+            New-Item -Path $ConfigFile -ItemType File -Force
         }
         else {
-            $HashTable | Export-Clixml -Path $Global:ConfigFile
+            $HashTable | Export-Clixml -Path $ConfigFile
         }
     }
     catch {
-    Write-Error ("Failed to create configuration file: " + $Global:ConfigFile)
+    Write-Error ("Failed to create configuration file: " + $ConfigFile)
     exit
     }
 }
