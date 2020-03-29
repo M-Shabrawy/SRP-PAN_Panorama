@@ -22,7 +22,6 @@ param(
     [string]$PANVersion = '9.0'
 )
 
-$ApiKEY = "LUFRPT1aZlh5V3lTWEFYTVo1K2V6VmxMcjhpcEh0emc9aHo1RncwdUtNVzFmRlRtRGdlN3JQSXZ0SEpTRTZha1FZbzd0YU1FQWNpdnJLWWhzeHR6cmI5SWtxRm5DOVBBMktpVU9rWDBLRE84VGloQ1VwYkxHalE9PQ=="
 $PANAPIBaseURI = "https://$PANHost/restapi/$PANVersion"
 $tag = 'LRSRP'
 
@@ -171,7 +170,9 @@ Function Commit-Config{
 }
 
 Disable-SSLError
-#Get-Config
+if ($APIKey -eq ""){
+    Get-Config
+}
 Check-Group
 Add-Host
 Add-ToAddressGroup
